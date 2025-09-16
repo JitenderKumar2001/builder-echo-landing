@@ -1,10 +1,9 @@
 import React from "react";
 import { Mic, Send, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { AuthContext } from "@/context/AuthContext";
 import {
-  auth,
   firebaseEnabled,
-  ensureAnonAuth,
   subscribeToMessages,
   sendText,
   uploadVoiceAndSend,
