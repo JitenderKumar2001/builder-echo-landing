@@ -1,4 +1,3 @@
-import { useContext, useMemo, useState } from "react";
 import React, { useContext, useMemo, useState } from "react";
 import {
   AlertCircle,
@@ -51,7 +50,7 @@ export default function Index() {
         title: settings.language === "hi" ? "सहायता माँगे" : "Request Help",
         desc:
           settings.language === "hi"
-            ? "चिकित्सा, दैनिक कार्य, भावनात्मक"
+            ? "चिकित्सा, द��निक कार्य, भावनात्मक"
             : "Medical, daily, emotional",
         icon: <HeartPulse className="h-8 w-8" />,
         color: "from-primary to-primary/80",
@@ -83,7 +82,7 @@ export default function Index() {
         onClick: () =>
           toast.info(
             settings.language === "hi"
-              ? "आज की गतिविधियाँ दिखाईं गईं"
+              ? "आज की गतिविधियाँ दि��ाईं गईं"
               : "Showing today’s agenda",
           ),
       },
@@ -150,7 +149,7 @@ export default function Index() {
           <ReminderRow
             time="9:00 PM"
             title={
-              settings.language === "hi" ? "ब्लड प्रेशर" : "Blood pressure"
+              settings.language === "hi" ? "ब्लड प्���ेशर" : "Blood pressure"
             }
             note={settings.language === "hi" ? "सोने से पहले" : "Before sleep"}
           />
@@ -177,7 +176,7 @@ export default function Index() {
           <AlertDialogHeader>
             <AlertDialogTitle className="text-2xl flex items-center gap-3">
               <ShieldAlert className="h-7 w-7 text-red-600" />{" "}
-              {settings.language === "hi" ? "आपातकालीन SOS" : "Emergency SOS"}
+              {settings.language === "hi" ? "आपातका���ीन SOS" : "Emergency SOS"}
             </AlertDialogTitle>
             <AlertDialogDescription className="text-lg">
               {settings.language === "hi"
