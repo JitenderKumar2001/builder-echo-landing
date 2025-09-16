@@ -46,25 +46,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       document.body.appendChild(container);
     }
 
+    let verifier: RecaptchaVerifier | null = null;
+    const win = window as any;
     try {
-      // Reuse verifier if present to avoid multiple widgets
-      const win = window as any;
-      let verifier: RecaptchaVerifier;
-      if (win.__firebaseRecaptchaVerifier && win.__firebaseRecaptchaVerifier.render) {
-        verifier = win.__firebaseRecaptchaVerifier;
-      } else {
-        verifier = new RecaptchaVerifier(authInst, "recaptcha-container", {
-          size: "invisible",
-        });
-        win.__firebaseRecaptchaVerifier = verifier;
+      // If an old verifier exists, try to clear it to avoid stale widget issues.
+      if (win.__firebaseRecaptchaVerifier) {
+        try {
+          if (typeof win.__firebaseRecaptchaVerifier.clear === "function") {
+            win.__firebaseRecaptchaVerifier.clear();
+          }
+        } catch (err) {
+          // ignore
+        }
+        win.__firebaseRecaptchaVerifier = undefined;
       }
 
-      // Make sure widget is rendered (some environments need explicit render)
+      verifier = new RecaptchaVerifier(authInst, "recaptcha-container", {
+        size: "invisible",
+      });
+      win.__firebaseRecaptchaVerifier = verifier;
+
+      // Some browsers need explicit render
       if (typeof verifier.render === "function") {
         try {
           await verifier.render();
         } catch (err) {
-          // ignore render errors; signInWithPhoneNumber may still work
           console.debug("recaptcha render failed", err);
         }
       }
@@ -72,19 +78,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const conf = await signInWithPhoneNumber(authInst, phoneE164, verifier);
       setConfirmation(conf);
     } catch (e: any) {
-      console.error("requestOtp error", e);
-      // Map common Firebase Auth errors to user-friendly messages
-      const code = e?.code || e?.message || "unknown";
+      console.error("requestOtp error", { code: e?.code, message: e?.message, stack: e?.stack });
+      // Clean up verifier on error
+      try {
+        if (verifier && typeof verifier.clear === "function") verifier.clear();
+        if (win.__firebaseRecaptchaVerifier) win.__firebaseRecaptchaVerifier = undefined;
+      } catch {}
+
+      const code = (e?.code || e?.message || "unknown").toString();
       if (code.includes("operation-not-allowed") || code.includes("OPERATION_NOT_ALLOWED")) {
-        throw new Error("Phone authentication is disabled in Firebase console. Enable Phone provider.");
+        throw new Error("Phone authentication is disabled in Firebase console. Enable Phone provider. (firebase error: " + code + ")");
       }
       if (code.includes("unauthorized-domain") || code.includes("UNAUTHORIZED_DOMAIN")) {
-        throw new Error("This domain is not authorized for Firebase Auth. Add your site to Authorized domains in Firebase Console.");
+        throw new Error("This domain is not authorized for Firebase Auth. Add your site to Authorized domains in Firebase Console. (firebase error: " + code + ")");
       }
       if (code.includes("quota_exceeded") || code.includes("TOO_MANY_REQUESTS") || code.includes("too-many-requests")) {
-        throw new Error("Too many requests. Please try again later.");
+        throw new Error("Too many requests. Please try again later. (firebase error: " + code + ")");
       }
-      throw e;
+      // For other errors surface code/message to UI
+      throw new Error("requestOtp error: " + code);
     }
   };
 
