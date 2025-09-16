@@ -1,5 +1,4 @@
-import React, { useContext, useMemo, useState } from "react";
-import React, { useContext, useMemo, useState } from "react";
+import React from "react";
 import {
   AlertCircle,
   BellRing,
@@ -24,7 +23,7 @@ import { SettingsContext, STRINGS } from "../App";
 import { toast } from "sonner";
 
 function useTTS() {
-  const settings = useContext(SettingsContext);
+  const settings = React.useContext(SettingsContext);
   const enabled = settings?.tts ?? false;
   const speak = (text: string) => {
     if (!enabled) return;
@@ -39,19 +38,19 @@ function useTTS() {
 }
 
 export default function Index() {
-  const settings = useContext(SettingsContext)!;
+  const settings = React.useContext(SettingsContext)!;
   const t = STRINGS[settings.language];
   const { speak } = useTTS();
-  const [sosOpen, setSosOpen] = useState(false);
+  const [sosOpen, setSosOpen] = React.useState(false);
 
-  const quickItems = useMemo(
+  const quickItems = React.useMemo(
     () => [
       {
         key: "request",
         title: settings.language === "hi" ? "सहायता माँगे" : "Request Help",
         desc:
           settings.language === "hi"
-            ? "चिकित्सा, द��निक कार्य, भावनात्मक"
+            ? "चिकित्सा, दैनिक कार्य, भावनात्मक"
             : "Medical, daily, emotional",
         icon: <HeartPulse className="h-8 w-8" />,
         color: "from-primary to-primary/80",
@@ -65,8 +64,7 @@ export default function Index() {
       {
         key: "sos",
         title: "SOS",
-        desc:
-          settings.language === "hi" ? "आपातकालीन सहायता" : "Emergency help",
+        desc: settings.language === "hi" ? "आ���ातकालीन सहायता" : "Emergency help",
         icon: <ShieldAlert className="h-8 w-8" />,
         color: "from-red-600 to-red-500",
         onClick: () => setSosOpen(true),
@@ -83,15 +81,14 @@ export default function Index() {
         onClick: () =>
           toast.info(
             settings.language === "hi"
-              ? "आज की गतिविधियाँ दि��ाईं गईं"
+              ? "आज की गतिविधियाँ दिखाईं गईं"
               : "Showing today’s agenda",
           ),
       },
       {
         key: "chat",
         title: settings.language === "hi" ? "चैट" : "Chat",
-        desc:
-          settings.language === "hi" ? "केयरगिवर/परिवार" : "Caregiver/Family",
+        desc: settings.language === "hi" ? "केयरगिवर/परिवार" : "Caregiver/Family",
         icon: <Users className="h-8 w-8" />,
         color: "from-emerald-600 to-emerald-500",
         onClick: () => (window.location.href = "/chat"),
@@ -132,40 +129,20 @@ export default function Index() {
 
       <section className="rounded-2xl p-5 bg-card border">
         <h3 className="text-xl font-bold flex items-center gap-2">
-          <BellRing className="h-6 w-6 text-amber-500" />{" "}
-          {settings.language === "hi"
-            ? "दवाई रिमाइंडर"
-            : "Medication Reminders"}
+          <BellRing className="h-6 w-6 text-amber-500" /> {settings.language === "hi" ? "दवाई रिमाइंडर" : "Medication Reminders"}
         </h3>
         <div className="mt-3 grid gap-3">
-          <ReminderRow
-            time="8:00 AM"
-            title={
-              settings.language === "hi" ? "मधुमेह की दवा" : "Diabetes meds"
-            }
-            note={
-              settings.language === "hi" ? "खाने के बाद" : "After breakfast"
-            }
-          />
-          <ReminderRow
-            time="9:00 PM"
-            title={
-              settings.language === "hi" ? "ब्लड प्���ेशर" : "Blood pressure"
-            }
-            note={settings.language === "hi" ? "सोने से पहले" : "Before sleep"}
-          />
+          <ReminderRow time="8:00 AM" title={settings.language === "hi" ? "मधुमेह की दवा" : "Diabetes meds"} note={settings.language === "hi" ? "खाने के बाद" : "After breakfast"} />
+          <ReminderRow time="9:00 PM" title={settings.language === "hi" ? "ब्लड प्रेशर" : "Blood pressure"} note={settings.language === "hi" ? "सोने से पहले" : "Before sleep"} />
         </div>
       </section>
 
       <section className="rounded-2xl p-5 bg-card border">
         <h3 className="text-xl font-bold flex items-center gap-2">
-          <AlertCircle className="h-6 w-6 text-primary" />{" "}
-          {settings.language === "hi" ? "परिवार चेतावनी" : "Family Alerts"}
+          <AlertCircle className="h-6 w-6 text-primary" /> {settings.language === "hi" ? "परिवार चेतावनी" : "Family Alerts"}
         </h3>
         <p className="mt-2 text-lg text-muted-foreground">
-          {settings.language === "hi"
-            ? "मिस्ड मेडिकेशन पर परिवार को तुरंत सूचना भेजी जाएगी।"
-            : "Family will be alerted instantly for missed meds, SOS, or bookings."}
+          {settings.language === "hi" ? "मिस्ड मेडिकेशन पर परिवार को तुरंत सूचना भेजी जाएगी।" : "Family will be alerted instantly for missed meds, SOS, or bookings."}
         </p>
       </section>
 
@@ -176,19 +153,14 @@ export default function Index() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="text-2xl flex items-center gap-3">
-              <ShieldAlert className="h-7 w-7 text-red-600" />{" "}
-              {settings.language === "hi" ? "आपातका���ीन SOS" : "Emergency SOS"}
+              <ShieldAlert className="h-7 w-7 text-red-600" /> {settings.language === "hi" ? "आपातकालीन SOS" : "Emergency SOS"}
             </AlertDialogTitle>
             <AlertDialogDescription className="text-lg">
-              {settings.language === "hi"
-                ? "क्या आप अपने आपातकालीन संपर्क को कॉल और लोकेशन भेजना चाहते हैं?"
-                : "Do you want to call and send your location to your emergency contact?"}
+              {settings.language === "hi" ? "क्या आप अपने आपातकालीन संपर्क को कॉल और लोकेशन भेजना चाहते हैं?" : "Do you want to call and send your location to your emergency contact?"}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="text-lg py-6 px-6">
-              {settings.language === "hi" ? "रद्द करें" : "Cancel"}
-            </AlertDialogCancel>
+            <AlertDialogCancel className="text-lg py-6 px-6">{settings.language === "hi" ? "रद्द करें" : "Cancel"}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-red-600 hover:bg-red-600/90 text-lg py-6 px-6"
               onClick={() => {
@@ -196,19 +168,14 @@ export default function Index() {
                   if (navigator.geolocation) {
                     navigator.geolocation.getCurrentPosition((pos) => {
                       const { latitude, longitude } = pos.coords;
-                      toast.success(
-                        `${settings.language === "hi" ? "लोकेशन भेजी गई" : "Location sent"}: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`,
-                      );
+                      toast.success(`${settings.language === "hi" ? "लोकेशन भेजी गई" : "Location sent"}: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
                     });
                   }
                 } catch {}
                 setSosOpen(false);
               }}
             >
-              <span className="inline-flex items-center gap-2">
-                <PhoneCall className="h-5 w-5" />{" "}
-                {settings.language === "hi" ? "कॉल और भेजें" : "Call & Send"}
-              </span>
+              <span className="inline-flex items-center gap-2"><PhoneCall className="h-5 w-5" /> {settings.language === "hi" ? "कॉल और भेजें" : "Call & Send"}</span>
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -217,24 +184,14 @@ export default function Index() {
   );
 }
 
-function ReminderRow({
-  time,
-  title,
-  note,
-}: {
-  time: string;
-  title: string;
-  note: string;
-}) {
+function ReminderRow({ time, title, note }: { time: string; title: string; note: string }) {
   return (
     <div className="flex items-center justify-between rounded-xl border p-4 bg-secondary/30">
       <div>
         <div className="text-xl font-bold">{title}</div>
         <div className="text-muted-foreground">{note}</div>
       </div>
-      <div className="text-lg font-semibold flex items-center gap-2">
-        <BellRing className="h-5 w-5" /> {time}
-      </div>
+      <div className="text-lg font-semibold flex items-center gap-2"><BellRing className="h-5 w-5" /> {time}</div>
     </div>
   );
 }
