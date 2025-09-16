@@ -52,9 +52,9 @@ export default function ProfilePage() {
       setProfile((p) => ({ ...(p || {}), ...data }));
       setEditing(false);
       toast.success("Saved");
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
-      toast.error("Save failed");
+      toast.error(e?.message || "Save failed");
     } finally {
       setLoading(false);
     }
