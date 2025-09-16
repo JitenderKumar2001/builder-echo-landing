@@ -85,8 +85,10 @@ export default function Chat() {
       <div className="rounded-2xl border p-6 bg-card">
         <h2 className="text-2xl font-extrabold">Chat</h2>
         <p className="mt-2 text-lg text-muted-foreground">
-          Firebase is not configured. Set VITE_FIREBASE_API_KEY, VITE_FIREBASE_AUTH_DOMAIN, VITE_FIREBASE_PROJECT_ID,
-          VITE_FIREBASE_STORAGE_BUCKET, VITE_FIREBASE_MESSAGING_SENDER_ID, and VITE_FIREBASE_APP_ID.
+          Firebase is not configured. Set VITE_FIREBASE_API_KEY,
+          VITE_FIREBASE_AUTH_DOMAIN, VITE_FIREBASE_PROJECT_ID,
+          VITE_FIREBASE_STORAGE_BUCKET, VITE_FIREBASE_MESSAGING_SENDER_ID, and
+          VITE_FIREBASE_APP_ID.
         </p>
       </div>
     );
@@ -96,7 +98,9 @@ export default function Chat() {
     return (
       <div className="rounded-2xl border p-6 bg-card">
         <h2 className="text-2xl font-extrabold">Chat</h2>
-        <p className="mt-2 text-lg">Please sign in from the Profile tab to use chat.</p>
+        <p className="mt-2 text-lg">
+          Please sign in from the Profile tab to use chat.
+        </p>
       </div>
     );
   }
@@ -112,12 +116,23 @@ export default function Chat() {
         )}
         {messages.map((m) => (
           <div key={m.id} className="flex">
-            <div className={`max-w-[80%] rounded-2xl p-3 border ${m.uid === uid ? "ml-auto bg-primary text-primary-foreground" : "bg-secondary"}`}>
-              {m.text && <div className="whitespace-pre-wrap text-lg">{m.text}</div>}
-              {m.voiceUrl && (
-                <audio className="mt-1 w-full" controls src={m.voiceUrl} preload="metadata" />
+            <div
+              className={`max-w-[80%] rounded-2xl p-3 border ${m.uid === uid ? "ml-auto bg-primary text-primary-foreground" : "bg-secondary"}`}
+            >
+              {m.text && (
+                <div className="whitespace-pre-wrap text-lg">{m.text}</div>
               )}
-              <div className="mt-1 text-xs opacity-70">{m.uid === uid ? "You" : "Buddy"}</div>
+              {m.voiceUrl && (
+                <audio
+                  className="mt-1 w-full"
+                  controls
+                  src={m.voiceUrl}
+                  preload="metadata"
+                />
+              )}
+              <div className="mt-1 text-xs opacity-70">
+                {m.uid === uid ? "You" : "Buddy"}
+              </div>
             </div>
           </div>
         ))}

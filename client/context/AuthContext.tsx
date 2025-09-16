@@ -22,7 +22,9 @@ export const AuthContext = React.createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = React.useState<User | null>(null);
   const [loading, setLoading] = React.useState(true);
-  const [confirmation, setConfirmation] = React.useState<import("firebase/auth").ConfirmationResult | null>(null);
+  const [confirmation, setConfirmation] = React.useState<
+    import("firebase/auth").ConfirmationResult | null
+  >(null);
 
   React.useEffect(() => {
     if (!authInst) {
@@ -78,22 +80,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const conf = await signInWithPhoneNumber(authInst, phoneE164, verifier);
       setConfirmation(conf);
     } catch (e: any) {
-      console.error("requestOtp error", { code: e?.code, message: e?.message, stack: e?.stack });
+      console.error("requestOtp error", {
+        code: e?.code,
+        message: e?.message,
+        stack: e?.stack,
+      });
       // Clean up verifier on error
       try {
         if (verifier && typeof verifier.clear === "function") verifier.clear();
-        if (win.__firebaseRecaptchaVerifier) win.__firebaseRecaptchaVerifier = undefined;
+        if (win.__firebaseRecaptchaVerifier)
+          win.__firebaseRecaptchaVerifier = undefined;
       } catch {}
 
       const code = (e?.code || e?.message || "unknown").toString();
-      if (code.includes("operation-not-allowed") || code.includes("OPERATION_NOT_ALLOWED")) {
-        throw new Error("Phone authentication is disabled in Firebase console. Enable Phone provider. (firebase error: " + code + ")");
+      if (
+        code.includes("operation-not-allowed") ||
+        code.includes("OPERATION_NOT_ALLOWED")
+      ) {
+        throw new Error(
+          "Phone authentication is disabled in Firebase console. Enable Phone provider. (firebase error: " +
+            code +
+            ")",
+        );
       }
-      if (code.includes("unauthorized-domain") || code.includes("UNAUTHORIZED_DOMAIN")) {
-        throw new Error("This domain is not authorized for Firebase Auth. Add your site to Authorized domains in Firebase Console. (firebase error: " + code + ")");
+      if (
+        code.includes("unauthorized-domain") ||
+        code.includes("UNAUTHORIZED_DOMAIN")
+      ) {
+        throw new Error(
+          "This domain is not authorized for Firebase Auth. Add your site to Authorized domains in Firebase Console. (firebase error: " +
+            code +
+            ")",
+        );
       }
-      if (code.includes("quota_exceeded") || code.includes("TOO_MANY_REQUESTS") || code.includes("too-many-requests")) {
-        throw new Error("Too many requests. Please try again later. (firebase error: " + code + ")");
+      if (
+        code.includes("quota_exceeded") ||
+        code.includes("TOO_MANY_REQUESTS") ||
+        code.includes("too-many-requests")
+      ) {
+        throw new Error(
+          "Too many requests. Please try again later. (firebase error: " +
+            code +
+            ")",
+        );
       }
       // For other errors surface code/message to UI
       throw new Error("requestOtp error: " + code);
