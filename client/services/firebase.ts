@@ -26,7 +26,8 @@ let storage: FirebaseStorage | null = null;
 let auth = null as ReturnType<typeof getAuth> | null;
 
 if (firebaseEnabled) {
-  const app = getApps().length ? getApps()[0] : initializeApp(cfg as Record<string, string>);
+  const initCfg = optional.measurementId ? { ...(cfg as Record<string, string>), measurementId: optional.measurementId } : (cfg as Record<string, string>);
+  const app = getApps().length ? getApps()[0] : initializeApp(initCfg);
   auth = getAuth(app);
   db = getFirestore(app);
   storage = getStorage(app);
