@@ -84,8 +84,12 @@ function AppInner() {
         <header className="sticky top-0 z-40 w-full bg-card/80 backdrop-blur border-b">
           <div className="max-w-screen-md mx-auto px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-full bg-primary text-primary-foreground grid place-items-center font-bold">SB</div>
-              <div className="text-2xl font-extrabold tracking-tight">{t.appName}</div>
+              <div className="h-9 w-9 rounded-full bg-primary text-primary-foreground grid place-items-center font-bold">
+                SB
+              </div>
+              <div className="text-2xl font-extrabold tracking-tight">
+                {t.appName}
+              </div>
             </div>
             <div className="flex items-center gap-2">
               <button
@@ -93,20 +97,36 @@ function AppInner() {
                 onClick={() => setTts((v) => !v)}
                 className={cn(
                   "px-3 py-2 rounded-md text-sm font-semibold",
-                  tts ? "bg-accent text-accent-foreground" : "bg-secondary text-secondary-foreground",
+                  tts
+                    ? "bg-accent text-accent-foreground"
+                    : "bg-secondary text-secondary-foreground",
                 )}
               >
-                {tts ? (language === "hi" ? "आवाज़ चालू" : "Voice On") : language === "hi" ? "आवाज़ बंद" : "Voice Off"}
+                {tts
+                  ? language === "hi"
+                    ? "आवाज़ चालू"
+                    : "Voice On"
+                  : language === "hi"
+                    ? "आवाज़ बंद"
+                    : "Voice Off"}
               </button>
               <button
                 aria-label="Toggle high contrast"
                 onClick={() => setDark((v) => !v)}
                 className={cn(
                   "px-3 py-2 rounded-md text-sm font-semibold",
-                  dark ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground",
+                  dark
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary text-secondary-foreground",
                 )}
               >
-                {dark ? (language === "hi" ? "डार्क" : "Dark") : language === "hi" ? "लाइट" : "Light"}
+                {dark
+                  ? language === "hi"
+                    ? "डार्क"
+                    : "Dark"
+                  : language === "hi"
+                    ? "लाइट"
+                    : "Light"}
               </button>
               <select
                 aria-label="Language"
@@ -133,10 +153,26 @@ function AppInner() {
 
         <nav className="fixed bottom-0 left-0 right-0 border-t bg-card/95 backdrop-blur">
           <div className="max-w-screen-md mx-auto grid grid-cols-4">
-            <TabLink to="/" icon={<Home className="h-6 w-6" />} label={t.home} />
-            <TabLink to="/services" icon={<HeartHandshake className="h-6 w-6" />} label={t.services} />
-            <TabLink to="/chat" icon={<MessageCircle className="h-6 w-6" />} label={t.chat} />
-            <TabLink to="/profile" icon={<User className="h-6 w-6" />} label={t.profile} />
+            <TabLink
+              to="/"
+              icon={<Home className="h-6 w-6" />}
+              label={t.home}
+            />
+            <TabLink
+              to="/services"
+              icon={<HeartHandshake className="h-6 w-6" />}
+              label={t.services}
+            />
+            <TabLink
+              to="/chat"
+              icon={<MessageCircle className="h-6 w-6" />}
+              label={t.chat}
+            />
+            <TabLink
+              to="/profile"
+              icon={<User className="h-6 w-6" />}
+              label={t.profile}
+            />
           </div>
         </nav>
       </div>
@@ -144,14 +180,24 @@ function AppInner() {
   );
 }
 
-function TabLink({ to, icon, label }: { to: string; icon: React.ReactNode; label: string }) {
+function TabLink({
+  to,
+  icon,
+  label,
+}: {
+  to: string;
+  icon: React.ReactNode;
+  label: string;
+}) {
   return (
     <NavLink
       to={to}
       className={({ isActive }) =>
         cn(
           "flex items-center justify-center gap-2 py-3 text-base font-semibold",
-          isActive ? "text-primary" : "text-muted-foreground hover:text-foreground",
+          isActive
+            ? "text-primary"
+            : "text-muted-foreground hover:text-foreground",
         )
       }
     >
