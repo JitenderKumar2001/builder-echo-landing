@@ -11,6 +11,7 @@ import {
 } from "@/services/firebase";
 
 export default function Chat() {
+  const auth = React.useContext(AuthContext)!;
   const [ready, setReady] = React.useState(false);
   const [uid, setUid] = React.useState<string | null>(null);
   const [messages, setMessages] = React.useState<ChatMessage[]>([]);
@@ -23,22 +24,15 @@ export default function Chat() {
 
   React.useEffect(() => {
     if (!firebaseEnabled) return;
-    (async () => {
-      const user = await ensureAnonAuth();
-      if (!user) {
-        toast.error("Firebase auth failed. Enable Anonymous Sign-in in Firebase Console.");
-        return;
-      }
-      setUid(user.uid);
-      setReady(true);
-    })();
-  }, []);
+    setUid(auth.user ? auth.user.uid : null);
+    setReady(true);
+  }, [auth.user]);
 
   React.useEffect(() => {
-    if (!firebaseEnabled || !ready) return;
+    if (!firebaseEnabled || !ready || !uid) return;
     const unsub = subscribeToMessages(roomId, setMessages);
     return () => unsub();
-  }, [ready]);
+  }, [ready, uid]);
 
   const onSend = async () => {
     const text = input.trim();
@@ -94,6 +88,15 @@ export default function Chat() {
           Firebase is not configured. Set VITE_FIREBASE_API_KEY, VITE_FIREBASE_AUTH_DOMAIN, VITE_FIREBASE_PROJECT_ID,
           VITE_FIREBASE_STORAGE_BUCKET, VITE_FIREBASE_MESSAGING_SENDER_ID, and VITE_FIREBASE_APP_ID.
         </p>
+      </div>
+    );
+  }
+
+  if (!auth.user) {
+    return (
+      <div className="rounded-2xl border p-6 bg-card">
+        <h2 className="text-2xl font-extrabold">Chat</h2>
+        <p className="mt-2 text-lg">Please sign in from the Profile tab to use chat.</p>
       </div>
     );
   }
