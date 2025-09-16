@@ -207,13 +207,17 @@ function TabLink({
   );
 }
 
+import { AuthProvider } from "./context/AuthContext";
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <AppInner />
+        <AuthProvider>
+          <AppInner />
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
