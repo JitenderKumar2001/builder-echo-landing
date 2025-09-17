@@ -6,11 +6,16 @@ import { createServer } from "./server";
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
-    host: "::",
-    port: 8080,
-    fs: {
-      allow: ["./client", "./shared"],
-      deny: [".env", ".env.*", "*.{crt,pem}", "**/.git/**", "server/**"],
+  host: "::",
+  port: 8080,
+  fs: {
+    // allow project root and your client/shared folders
+    allow: [
+      path.resolve(__dirname), 
+      path.resolve(__dirname, "./client"), 
+      path.resolve(__dirname, "./shared")
+    ],
+    deny: [".env", ".env.*", "*.{crt,pem}", "**/.git/**", "server/**"],
     },
   },
   build: {
