@@ -11,7 +11,7 @@ import {
   ShieldPlus,
 } from "lucide-react";
 import { db, storage } from "@/services/firebase";
-import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { toast } from "sonner";
 
@@ -31,6 +31,7 @@ type Profile = {
 export default function ProfilePage() {
   const auth = React.useContext(AuthContext)!;
   const [profile, setProfile] = React.useState<Profile | null>(null);
+  const [draftProfile, setDraftProfile] = React.useState<Profile | null>(null);
   const [editing, setEditing] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
   const uid = auth.user?.uid;
@@ -53,38 +54,68 @@ export default function ProfilePage() {
 
   if (!auth.user) return <PhoneLogin />;
 
-  const startEdit = () => setEditing(true);
-  const cancelEdit = () => setEditing(false);
+  const startEdit = () => {
+    setDraftProfile(profile); // make a copy
+    setEditing(true);
+  };
+  const cancelEdit = () => {
+    setDraftProfile(null); // discard changes
+    setEditing(false);
+  };
 
-  const save = async (data: Profile) => {
-    if (!uid || !db) return;
+  const save = async () => {
+    if (!uid || !db || !draftProfile) {
+      toast.error("Cannot save: missing user or profile data");
+      return;
+    }
     setLoading(true);
     try {
       const refDoc = doc(db, "profiles", uid);
-      if (profile)
-        await setDoc(refDoc, { ...profile, ...data }, { merge: true });
-      else await setDoc(refDoc, data);
-      setProfile((p) => ({ ...(p || {}), ...data }));
-      setEditing(false);
-      toast.success("Saved");
+
+      // Write draftProfile to Firestore
+      await setDoc(refDoc, draftProfile, { merge: true });
+
+      // Fetch back to ensure save worked
+      const snap = await getDoc(refDoc);
+      if (snap.exists()) {
+        const updatedProfile = snap.data() as Profile;
+        setProfile(updatedProfile); // Update UI
+        toast.success("Profile saved successfully");
+      } else {
+        toast.error("Failed to fetch updated profile after save");
+        console.error("Firestore document missing after save", refDoc.path);
+      }
     } catch (e: any) {
-      console.error(e);
+      console.error("Error saving profile:", e);
       toast.error(e?.message || "Save failed");
     } finally {
       setLoading(false);
+      setEditing(false);
     }
   };
 
   const onPhotoChange = async (file: File) => {
     if (!uid || !storage) return;
+    setLoading(true);
     try {
       const r = ref(storage, `avatars/${uid}/${Date.now()}-${file.name}`);
-      await uploadBytes(r, file);
-      const url = await getDownloadURL(r);
-      await save({ photoUrl: url });
-    } catch (e) {
-      console.error(e);
-      toast.error("Photo upload failed");
+      const uploadResult = await uploadBytes(r, file);
+      const url = await getDownloadURL(uploadResult.ref);
+
+      // Update draftProfile with new photo
+      const updatedDraft = {
+        ...(draftProfile || profile || {}),
+        photoUrl: url,
+      };
+      setDraftProfile(updatedDraft);
+
+      // Save updated profile
+      await save();
+    } catch (e: any) {
+      console.error("Photo upload failed:", e);
+      toast.error(e?.message || "Photo upload failed");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -95,7 +126,9 @@ export default function ProfilePage() {
           <img
             src={
               profile?.photoUrl ||
-              `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(profile?.displayName || "User")}`
+              `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(
+                profile?.displayName || "User",
+              )}`
             }
             alt="Profile"
             className="h-20 w-20 rounded-2xl object-cover border"
@@ -106,9 +139,7 @@ export default function ProfilePage() {
               type="file"
               accept="image/*"
               className="hidden"
-              onChange={(e) =>
-                e.target.files && onPhotoChange(e.target.files[0])
-              }
+              onChange={(e) => e.target.files && onPhotoChange(e.target.files[0])}
             />
           </label>
         </div>
@@ -141,44 +172,129 @@ export default function ProfilePage() {
         <Field
           icon={<UserRound className="h-5 w-5" />}
           label="Name"
-          value={profile?.displayName}
+          value={editing ? draftProfile?.displayName : profile?.displayName}
+          editing={editing}
+          required
+          onChange={(v) =>
+            setDraftProfile((p) => ({ ...(p || {}), displayName: v }))
+          }
         />
         <Field
           icon={<UserRound className="h-5 w-5" />}
           label="Age / Gender"
-          value={[profile?.age, profile?.gender].filter(Boolean).join(" • ")}
+          value={[
+            editing ? draftProfile?.age : profile?.age,
+            editing ? draftProfile?.gender : profile?.gender,
+          ]
+            .filter(Boolean)
+            .join(" • ")}
+          editing={editing}
+          required
+          onChangeAge={(v) =>
+            setDraftProfile((p) => ({
+              ...(p || {}),
+              age: Number(v) || undefined,
+            }))
+          }
+          onChangeGender={(v) =>
+            setDraftProfile((p) => ({ ...(p || {}), gender: v }))
+          }
+          isAgeGender
         />
         <Field
           icon={<Phone className="h-5 w-5" />}
           label="Phone"
           value={profile?.phone || auth.user?.phoneNumber || ""}
+          editing={false}
         />
         <Field
           icon={<Mail className="h-5 w-5" />}
           label="Email"
-          value={profile?.email || auth.user?.email || ""}
+          value={
+            editing
+              ? draftProfile?.email
+              : profile?.email || auth.user?.email || ""
+          }
+          editing={editing}
+          onChange={(v) => setDraftProfile((p) => ({ ...(p || {}), email: v }))}
+          optional
+        />
+        <Field
+          icon={<ShieldPlus className="h-5 w-5" />}
+          label="Role"
+          value={editing ? draftProfile?.role : profile?.role}
+          editing={editing}
+          required
+          isDropdown
+          options={["Elderly", "Caregiver", "Family"]}
+          onChange={(v) =>
+            setDraftProfile((p) => ({
+              ...(p || {}),
+              role: v as Profile["role"],
+            }))
+          }
         />
         <Field
           icon={<HeartPulse className="h-5 w-5" />}
           label="Medical Conditions"
-          value={profile?.medical}
+          value={editing ? draftProfile?.medical : profile?.medical}
+          editing={editing}
+          required
+          onChange={(v) =>
+            setDraftProfile((p) => ({ ...(p || {}), medical: v }))
+          }
         />
         <Field
           icon={<ShieldPlus className="h-5 w-5" />}
           label="Emergency Contact"
-          value={[profile?.emergencyName, profile?.emergencyPhone]
+          value={[
+            editing ? draftProfile?.emergencyName : profile?.emergencyName,
+            editing ? draftProfile?.emergencyPhone : profile?.emergencyPhone,
+          ]
             .filter(Boolean)
             .join(" • ")}
+          editing={editing}
+          required
+          onChangeName={(v) =>
+            setDraftProfile((p) => ({ ...(p || {}), emergencyName: v }))
+          }
+          onChangePhone={(v) =>
+            setDraftProfile((p) => ({ ...(p || {}), emergencyPhone: v }))
+          }
+          isEmergency
         />
       </div>
 
       {editing && (
-        <EditForm
-          initial={profile || {}}
-          onCancel={cancelEdit}
-          onSave={save}
-          loading={loading}
-        />
+        <div className="mt-4 flex gap-2">
+          <button
+            onClick={() => {
+              if (
+                !draftProfile?.displayName ||
+                !draftProfile?.age ||
+                !draftProfile?.gender ||
+                !draftProfile?.role ||
+                !draftProfile?.medical ||
+                !draftProfile?.emergencyName ||
+                !draftProfile?.emergencyPhone
+              ) {
+                alert("Please fill all mandatory fields.");
+                return;
+              }
+              save();
+            }}
+            disabled={loading}
+            className="h-12 px-6 rounded-xl bg-primary text-primary-foreground font-bold"
+          >
+            {loading ? "Saving…" : "Save"}
+          </button>
+          <button
+            onClick={cancelEdit}
+            className="h-12 px-6 rounded-xl bg-secondary font-bold"
+          >
+            Cancel
+          </button>
+        </div>
       )}
     </div>
   );
@@ -188,125 +304,98 @@ function Field({
   icon,
   label,
   value,
+  editing,
+  onChange,
+  onChangeAge,
+  onChangeGender,
+  onChangeName,
+  onChangePhone,
+  isAgeGender,
+  isEmergency,
+  isDropdown,
+  options,
+  required,
+  optional,
 }: {
   icon: React.ReactNode;
   label: string;
   value?: string | number;
+  editing?: boolean;
+  onChange?: (v: string) => void;
+  onChangeAge?: (v: string) => void;
+  onChangeGender?: (v: string) => void;
+  onChangeName?: (v: string) => void;
+  onChangePhone?: (v: string) => void;
+  isAgeGender?: boolean;
+  isEmergency?: boolean;
+  isDropdown?: boolean;
+  options?: string[];
+  required?: boolean;
+  optional?: boolean;
 }) {
   return (
     <div className="rounded-xl border p-4 bg-secondary/30">
       <div className="text-sm text-muted-foreground flex items-center gap-2">
         {icon} {label}
+        {required && <span className="text-red-500 ml-1">*</span>}
+        {optional && <span className="text-xs ml-1">(optional)</span>}
       </div>
-      <div className="text-xl font-semibold mt-1 min-h-7">{value || "—"}</div>
+      {editing ? (
+        <div className="mt-1 grid gap-2">
+          {isAgeGender ? (
+            <div className="flex gap-2">
+              <input
+                type="number"
+                className="flex-1 rounded border px-2 py-1"
+                placeholder="Age"
+                onChange={(e) => onChangeAge?.(e.target.value)}
+              />
+              <input
+                className="flex-1 rounded border px-2 py-1"
+                placeholder="Gender"
+                onChange={(e) => onChangeGender?.(e.target.value)}
+              />
+            </div>
+          ) : isEmergency ? (
+            <div className="flex gap-2">
+              <input
+                className="flex-1 rounded border px-2 py-1"
+                placeholder="Name"
+                onChange={(e) => onChangeName?.(e.target.value)}
+              />
+              <input
+                className="flex-1 rounded border px-2 py-1"
+                placeholder="Phone"
+                onChange={(e) => onChangePhone?.(e.target.value)}
+              />
+            </div>
+          ) : isDropdown ? (
+            <select
+              className="mt-1 rounded border px-2 py-1 w-full"
+              defaultValue={value?.toString() || ""}
+              onChange={(e) => onChange?.(e.target.value)}
+            >
+              <option value="" disabled>
+                Select {label}
+              </option>
+              {options?.map((opt) => (
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <input
+              className="mt-1 rounded border px-2 py-1 w-full"
+              defaultValue={value?.toString() || ""}
+              onChange={(e) => onChange?.(e.target.value)}
+            />
+          )}
+        </div>
+      ) : (
+        <div className="text-xl font-semibold mt-1 min-h-7">{value || "—"}</div>
+      )}
     </div>
-  );
-}
-
-function EditForm({
-  initial,
-  onSave,
-  onCancel,
-  loading,
-}: {
-  initial: Profile;
-  onSave: (p: Profile) => void;
-  onCancel: () => void;
-  loading: boolean;
-}) {
-  const [form, setForm] = React.useState<Profile>({ ...initial });
-  const onChange = (k: keyof Profile, v: any) =>
-    setForm((f) => ({ ...f, [k]: v }));
-  return (
-    <div className="rounded-xl border p-4">
-      <div className="grid sm:grid-cols-2 gap-3">
-        <LabeledInput
-          label="Name"
-          value={form.displayName || ""}
-          onChange={(v) => onChange("displayName", v)}
-        />
-        <LabeledInput
-          label="Age"
-          type="number"
-          value={form.age?.toString() || ""}
-          onChange={(v) => onChange("age", Number(v))}
-        />
-        <LabeledInput
-          label="Gender"
-          value={form.gender || ""}
-          onChange={(v) => onChange("gender", v)}
-        />
-        <LabeledInput
-          label="Role (Elderly/Caregiver/Family)"
-          value={form.role || ""}
-          onChange={(v) => onChange("role", v as any)}
-        />
-        <LabeledInput
-          label="Phone"
-          value={form.phone || ""}
-          onChange={(v) => onChange("phone", v)}
-        />
-        <LabeledInput
-          label="Email"
-          value={form.email || ""}
-          onChange={(v) => onChange("email", v)}
-        />
-        <LabeledInput
-          label="Medical Conditions"
-          value={form.medical || ""}
-          onChange={(v) => onChange("medical", v)}
-        />
-        <LabeledInput
-          label="Emergency Contact Name"
-          value={form.emergencyName || ""}
-          onChange={(v) => onChange("emergencyName", v)}
-        />
-        <LabeledInput
-          label="Emergency Contact Number"
-          value={form.emergencyPhone || ""}
-          onChange={(v) => onChange("emergencyPhone", v)}
-        />
-      </div>
-      <div className="mt-4 flex gap-2">
-        <button
-          onClick={() => onSave(form)}
-          disabled={loading}
-          className="h-12 px-6 rounded-xl bg-primary text-primary-foreground font-bold"
-        >
-          {loading ? "Saving…" : "Save"}
-        </button>
-        <button
-          onClick={onCancel}
-          className="h-12 px-6 rounded-xl bg-secondary font-bold"
-        >
-          Cancel
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function LabeledInput({
-  label,
-  value,
-  onChange,
-  type = "text",
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  type?: string;
-}) {
-  return (
-    <label className="grid gap-1">
-      <span className="text-sm text-muted-foreground">{label}</span>
-      <input
-        className="h-12 rounded-xl border px-4 text-lg"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        type={type}
-      />
-    </label>
   );
 }
 
