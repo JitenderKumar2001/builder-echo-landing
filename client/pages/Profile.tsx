@@ -98,7 +98,7 @@ export default function ProfilePage() {
     if (!uid || !storage) return;
     setLoading(true);
     try {
-      const r = ref(storage, `avatars/${uid}/${Date.now()}-${file.name}`);
+      const r = ref(storage, `profile/${uid}/${Date.now()}-${file.name}`);
       const uploadResult = await uploadBytes(r, file);
       const url = await getDownloadURL(uploadResult.ref);
 
