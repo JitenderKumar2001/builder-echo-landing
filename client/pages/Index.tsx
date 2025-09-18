@@ -87,13 +87,13 @@ export default function Index() {
           ),
       },
       {
-        key: "chat",
-        title: settings.language === "hi" ? "चैट" : "Chat",
+        key: "care",
+        title: settings.language === "hi" ? "केयरगिवर खोजें" : "Find Caregiver",
         desc:
-          settings.language === "hi" ? "केयरगिवर/परिवार" : "Caregiver/Family",
+          settings.language === "hi" ? "बुकिंग और सदस्यता" : "Booking & Subscription",
         icon: <Users className="h-8 w-8" />,
         color: "from-emerald-600 to-emerald-500",
-        onClick: () => (window.location.href = "/chat"),
+        onClick: () => (window.location.href = "/services"),
       },
     ],
     [settings.language],
