@@ -5,7 +5,7 @@ import { createRoot } from "react-dom/client";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, NavLink } from "react-router-dom";
+import { BrowserRouter, Routes, Route, NavLink, useLocation } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Services from "./pages/Services";
@@ -77,6 +77,13 @@ function AppInner() {
   );
 
   const t = STRINGS[language];
+
+  const loc = useLocation();
+  useEffect(() => {
+    if (import.meta.env.DEV || import.meta.env.VITE_DEBUG === "true") {
+      console.debug("[route]", loc.pathname + loc.search);
+    }
+  }, [loc]);
 
   return (
     <SettingsContext.Provider value={value}>
@@ -214,7 +221,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
+      <BrowserRouter basename={import.meta.env.BASE_URL}>
         <AuthProvider>
           <AppInner />
         </AuthProvider>
