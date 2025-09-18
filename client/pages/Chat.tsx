@@ -2,25 +2,36 @@ import React from "react";
 import { Mic, Send, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { AuthContext } from "@/context/AuthContext";
+import { useSearchParams } from "react-router-dom";
 import {
   firebaseEnabled,
   subscribeToMessages,
   sendText,
   uploadVoiceAndSend,
   ChatMessage,
+  pairKey,
+  checkSubscription,
 } from "@/services/firebase";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/services/firebase";
 
 export default function Chat() {
   const auth = React.useContext(AuthContext)!;
   const [ready, setReady] = React.useState(false);
   const [uid, setUid] = React.useState<string | null>(null);
   const [messages, setMessages] = React.useState<ChatMessage[]>([]);
+  const [partnerUid, setPartnerUid] = React.useState<string>("");
+  const [allowed, setAllowed] = React.useState<boolean>(false);
+  const [roomId, setRoomId] = React.useState<string>("global");
+  const [myRole, setMyRole] = React.useState<string | null>(null);
+  const [partnerProfile, setPartnerProfile] = React.useState<any | null>(null);
+  const [params] = useSearchParams();
   const [input, setInput] = React.useState("");
   const [recording, setRecording] = React.useState(false);
   const [recorder, setRecorder] = React.useState<MediaRecorder | null>(null);
   const [chunks, setChunks] = React.useState<BlobPart[]>([]);
 
-  const roomId = "global";
+  // roomId will be computed once partner + subscription valid
 
   React.useEffect(() => {
     if (!firebaseEnabled) return;
@@ -29,15 +40,51 @@ export default function Chat() {
   }, [auth.user]);
 
   React.useEffect(() => {
-    if (!firebaseEnabled || !ready || !uid) return;
+    const p = params.get("partner");
+    if (p) setPartnerUid(p);
+  }, [params]);
+
+  React.useEffect(() => {
+    (async () => {
+      if (!db || !uid) return;
+      const snap = await getDoc(doc(db, "profiles", uid));
+      if (snap.exists()) setMyRole((snap.data() as any).role || null);
+    })();
+  }, [uid]);
+
+  React.useEffect(() => {
+    (async () => {
+      if (!db || !partnerUid) return;
+      const snap = await getDoc(doc(db, "profiles", partnerUid));
+      setPartnerProfile(snap.exists() ? snap.data() : null);
+    })();
+  }, [partnerUid]);
+
+  React.useEffect(() => {
+    (async () => {
+      if (!uid || !partnerUid || !myRole) {
+        setAllowed(false);
+        return;
+      }
+      const elderUid = myRole === "Elderly" ? uid : partnerUid;
+      const caregiverUid = myRole === "Caregiver" ? uid : partnerUid;
+      const ok = await checkSubscription(elderUid, caregiverUid);
+      setAllowed(ok);
+      if (ok) setRoomId(pairKey(uid, partnerUid));
+    })();
+  }, [uid, partnerUid, myRole]);
+
+  React.useEffect(() => {
+    if (!firebaseEnabled || !ready || !uid || !allowed) return;
     const unsub = subscribeToMessages(roomId, setMessages);
     return () => unsub();
-  }, [ready, uid]);
+  }, [ready, uid, allowed, roomId]);
 
   const onSend = async () => {
     const text = input.trim();
     if (!text) return;
     try {
+      if (!allowed) return toast.error("Not subscribed to this caregiver/elder");
       await sendText(roomId, uid || "unknown", text);
       setInput("");
     } catch (e) {
@@ -58,6 +105,7 @@ export default function Chat() {
         setRecording(false);
         const blob = new Blob(localChunks, { type: "audio/webm" });
         try {
+          if (!allowed) return;
           await uploadVoiceAndSend(roomId, uid || "unknown", blob);
         } catch (e) {
           console.error(e);
@@ -108,6 +156,28 @@ export default function Chat() {
   return (
     <div className="flex flex-col rounded-2xl border bg-card h-[calc(100vh-220px)]">
       <div className="px-4 py-3 border-b font-extrabold text-xl">Chat</div>
+      <div className="px-4 py-2 border-b grid gap-2 bg-secondary/30">
+        <label className="grid gap-1">
+          <span className="text-sm text-muted-foreground">Partner UID (Elder ↔ Caregiver)</span>
+          <input
+            className="h-12 rounded-xl border px-4 text-lg"
+            placeholder="Paste caregiver or elder UID"
+            value={partnerUid}
+            onChange={(e) => setPartnerUid(e.target.value.trim())}
+          />
+        </label>
+        {!myRole && (
+          <div className="text-sm text-destructive">Set your Role in Profile to chat.</div>
+        )}
+        {partnerUid && !allowed && (
+          <div className="text-sm text-muted-foreground">
+            Subscription required. Book a caregiver in Services to start a chat.
+          </div>
+        )}
+        {partnerProfile && (
+          <div className="text-sm">Chatting with: <span className="font-semibold">{partnerProfile.displayName || partnerUid}</span>{partnerProfile.role ? ` • ${partnerProfile.role}` : ""}</div>
+        )}
+      </div>
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {!ready && (
           <div className="flex items-center gap-2 text-muted-foreground">
