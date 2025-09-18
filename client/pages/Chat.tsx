@@ -84,7 +84,8 @@ export default function Chat() {
     const text = input.trim();
     if (!text) return;
     try {
-      if (!allowed) return toast.error("Not subscribed to this caregiver/elder");
+      if (!allowed)
+        return toast.error("Not subscribed to this caregiver/elder");
       await sendText(roomId, uid || "unknown", text);
       setInput("");
     } catch (e) {
@@ -158,7 +159,9 @@ export default function Chat() {
       <div className="px-4 py-3 border-b font-extrabold text-xl">Chat</div>
       <div className="px-4 py-2 border-b grid gap-2 bg-secondary/30">
         <label className="grid gap-1">
-          <span className="text-sm text-muted-foreground">Partner UID (Elder ↔ Caregiver)</span>
+          <span className="text-sm text-muted-foreground">
+            Partner UID (Elder ↔ Caregiver)
+          </span>
           <input
             className="h-12 rounded-xl border px-4 text-lg"
             placeholder="Paste caregiver or elder UID"
@@ -167,7 +170,9 @@ export default function Chat() {
           />
         </label>
         {!myRole && (
-          <div className="text-sm text-destructive">Set your Role in Profile to chat.</div>
+          <div className="text-sm text-destructive">
+            Set your Role in Profile to chat.
+          </div>
         )}
         {partnerUid && !allowed && (
           <div className="text-sm text-muted-foreground">
@@ -175,7 +180,13 @@ export default function Chat() {
           </div>
         )}
         {partnerProfile && (
-          <div className="text-sm">Chatting with: <span className="font-semibold">{partnerProfile.displayName || partnerUid}</span>{partnerProfile.role ? ` • ${partnerProfile.role}` : ""}</div>
+          <div className="text-sm">
+            Chatting with:{" "}
+            <span className="font-semibold">
+              {partnerProfile.displayName || partnerUid}
+            </span>
+            {partnerProfile.role ? ` • ${partnerProfile.role}` : ""}
+          </div>
         )}
       </div>
       <div className="flex-1 overflow-y-auto p-4 space-y-3">

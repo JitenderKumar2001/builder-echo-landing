@@ -7,16 +7,16 @@ import { createServer } from "./server";
 export default defineConfig(({ mode }) => ({
   base: process.env.VITE_BASE || "/",
   server: {
-  host: "::",
-  port: 8080,
-  fs: {
-    // allow project root and your client/shared folders
-    allow: [
-      path.resolve(__dirname), 
-      path.resolve(__dirname, "./client"), 
-      path.resolve(__dirname, "./shared")
-    ],
-    deny: [".env", ".env.*", "*.{crt,pem}", "**/.git/**", "server/**"],
+    host: "::",
+    port: 8080,
+    fs: {
+      // allow project root and your client/shared folders
+      allow: [
+        path.resolve(__dirname),
+        path.resolve(__dirname, "./client"),
+        path.resolve(__dirname, "./shared"),
+      ],
+      deny: [".env", ".env.*", "*.{crt,pem}", "**/.git/**", "server/**"],
     },
   },
   build: {

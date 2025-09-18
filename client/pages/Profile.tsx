@@ -143,7 +143,9 @@ export default function ProfilePage() {
               type="file"
               accept="image/*"
               className="hidden"
-              onChange={(e) => e.target.files && onPhotoChange(e.target.files[0])}
+              onChange={(e) =>
+                e.target.files && onPhotoChange(e.target.files[0])
+              }
             />
           </label>
         </div>

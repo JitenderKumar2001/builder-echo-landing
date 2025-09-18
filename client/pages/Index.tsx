@@ -90,7 +90,9 @@ export default function Index() {
         key: "care",
         title: settings.language === "hi" ? "केयरगिवर खोजें" : "Find Caregiver",
         desc:
-          settings.language === "hi" ? "बुकिंग और सदस्यता" : "Booking & Subscription",
+          settings.language === "hi"
+            ? "बुकिंग और सदस्यता"
+            : "Booking & Subscription",
         icon: <Users className="h-8 w-8" />,
         color: "from-emerald-600 to-emerald-500",
         onClick: () => (window.location.href = "/services"),

@@ -72,10 +72,15 @@ export function pairKey(uid1: string, uid2: string) {
   return [uid1, uid2].sort().join("__");
 }
 
-export async function checkSubscription(elderUid: string, caregiverUid: string): Promise<boolean> {
+export async function checkSubscription(
+  elderUid: string,
+  caregiverUid: string,
+): Promise<boolean> {
   if (!db) return false;
   const id = pairKey(elderUid, caregiverUid);
-  const d = await (await import("firebase/firestore")).getDoc((await import("firebase/firestore")).doc(db, "subscriptions", id));
+  const d = await (
+    await import("firebase/firestore")
+  ).getDoc((await import("firebase/firestore")).doc(db, "subscriptions", id));
   return d.exists() && (d.data() as any)?.active !== false;
 }
 
