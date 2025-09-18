@@ -41,11 +41,15 @@ export default function ProfilePage() {
       if (!uid || !db) return;
       const snap = await getDoc(doc(db, "profiles", uid));
       if (snap.exists()) setProfile(snap.data() as Profile);
-      else
-        setProfile({
+      else {
+        const base: Profile = {
           phone: auth.user?.phoneNumber || undefined,
           email: auth.user?.email || undefined,
-        });
+        };
+        setProfile(base);
+        setDraftProfile(base);
+        setEditing(true);
+      }
     })();
   }, [uid]);
 
@@ -424,6 +428,7 @@ function PhoneLogin() {
       setBusy(true);
       await auth.verifyOtp(code);
       toast.success("Signed in");
+      window.location.assign("/profile?new=1");
     } catch (e: any) {
       console.error(e);
       toast.error(e?.message || "Invalid code");
